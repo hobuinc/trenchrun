@@ -1,0 +1,40 @@
+[project]
+name = "trenchrun"
+requires-python = ">=3.8"
+description = "Compute the Death Star trenchrun image from lidar data"
+readme = "README.md"
+license = { text = "Apache-2.0" }
+authors = [
+  { name = "Howard Butler", email = "howard@hobu.co"},
+]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Information Technology",
+  "Intended Audience :: Science/Research",
+  "License :: OSI Approved :: Apache Software License",
+  "Topic :: Scientific/Engineering :: GIS",
+  "Topic :: Scientific/Engineering :: Image Processing"
+]
+dependencies = [
+  "typing-extensions"
+]
+dynamic = ["version"]
+
+[project.urls]
+homepage = "https://github.com/hobuinc/trenchrun"
+repository = "https://github.com/hobuinc/trenchrun"
+
+[tool.setuptools]
+package-dir = {"" =  "src"}
+zip-safe = false
+
+[tool.setuptools.dynamic]
+version = { attr = "trenchrun.__init__.__version__" }
+
+[build-system]
+requires = ["setuptools>=64.0"]
+build-backend = "setuptools.build_meta"
+
+[project.scripts]
+trenchrun = "trenchrun.__main__:main"
+
