@@ -1,2 +1,7 @@
-# ambient-absorption
-Compute Ambient Absorption from lidar intensity and ambient occlusion
+# Trenchrun
+
+
+This tool computes the Merdian Trench Run image for a scene using 
+Whitebox Tools, PDAL, and matplotlib.
+
+![Meridian Trench ](images/meridian.png)

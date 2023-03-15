@@ -1,0 +1,11 @@
+*.pyc
+_skbuild/*
+.vscode/*
+__pycache__
+build/*
+dist/*
+*.egg-info
+*.o
+*.so
+*.dylib
+.DS_Store

@@ -1,0 +1,11 @@
+name: absorption
+channels:
+  - conda-forge
+dependencies:
+  - gdal
+  - pdal
+  - python-pdal
+  - matplotlib
+  - numpy
+  - python
+  - whitebox_tools
