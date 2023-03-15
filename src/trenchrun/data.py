@@ -20,7 +20,7 @@ def run(command):
     if p.returncode != 0:
         error = ret[1].decode('utf-8','replace')
         raise RuntimeError(error)
-    
+
     response = ret[0].decode('utf-8','replace')
     return response
 
@@ -33,7 +33,7 @@ class Data(object):
         self.args.dsmPath = tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name
         self.args.aoPath = tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name
 
-    
+
     def checkValidData(self):
         reader = pdal.Reader(self.args.input)
         pipeline = reader.pipeline()
@@ -50,7 +50,7 @@ class Data(object):
                 j = json.loads(f.read())
             reader = pdal.Reader(filename=self.args.input, *j)
         else:
-            reader = pdal.Reader(filename=self.args.input)
+            reader = pdal.Reader(filename=self.args.input, resolution=2.0)
         return reader
 
     def getWriters(self):
@@ -68,7 +68,7 @@ class Data(object):
             output_type = 'idw',
             resolution=self.args.resolution,
         )
-        return intensity | dsm 
+        return intensity | dsm
 
     def getPipeline(self):
         reader = self.getReader()
@@ -81,7 +81,7 @@ class Data(object):
             stage = reader | writers
 
         return stage
-        
+
 
     def execute(self):
         pipeline = self.getPipeline()
@@ -119,6 +119,8 @@ class Data(object):
         command = f"""whitebox_tools -r=TimeInDaylight  \
         -i {self.args.dsmPath} -o {self.args.aoPath}  --az_fraction=15.0 \
         --max_dist=100.0 --lat={lat:.5f} --long={lng:.5f} """
-        logs.logger.info(f"Processed ambient occlusion '{command}'")
+        logs.logger.info(f"Processing ambient occlusion '{command}'")
         response = run(command)
+        logs.logger.info(f"Processed ambient occlusion ")
+
 

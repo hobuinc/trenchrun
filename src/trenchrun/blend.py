@@ -2,6 +2,8 @@
 import matplotlib as mpl
 import matplotlib.pylab as plt
 import uuid
+from . import logs
+
 __version__= '0.0.1'
 
 import numpy as np
@@ -46,6 +48,9 @@ class Blend(object):
         intensity = readBand(intensityFilename, 1, np.float32, True)
         daylight = readBand(daylightFilename, 1)
 
+        logs.logger.info(f'Intensity shape {intensity.shape} ')
+        logs.logger.info(f'Daylight shape {intensity.shape} ')
+
         if self.data.args.blue:
             intensity_RGBA = mpl.cm.Blues_r(intensity)
         else:
@@ -57,13 +62,14 @@ class Blend(object):
 
         RGBA = intensity_RGBA * 0.5 + daylight_RGB * 0.5
 
-        numBands = RGBA.shape[2] 
+        numBands = RGBA.shape[2]
 
         big = (RGBA*255).astype(np.uint8)
+        logs.logger.info(f'RGBA shape {big.shape} ')
 
         tifpath = f"/vsimem/{str(uuid.uuid4())}.tif"
         gtif = gdal.GetDriverByName("GTiff")
-        rast = gtif.Create(tifpath, intensity.shape[0], intensity.shape[1], numBands, gdal.GDT_Byte)
+        rast = gtif.Create(tifpath, intensity.shape[1], intensity.shape[0], numBands, gdal.GDT_Byte)
 
         info = getInfo(intensityFilename)
 
@@ -93,4 +99,4 @@ class Blend(object):
         ao = gdal.Open(self.data.args.aoPath)
         ds = gtif.CreateCopy( f"{self.data.args.output}-occlusion.tif", ao, 0,
             [ 'COMPRESS=Deflate', 'TILED=YES','PREDICTOR=2' ] )
- 
+
