@@ -1,0 +1,45 @@
+name: main
+
+on:
+  push:
+    branches-ignore:
+      - "dependabot/**"
+  pull_request:
+    types: [opened, reopened, synchronize]
+    paths-ignore:
+      - '**.md'
+
+env:
+  PIP_DISABLE_PIP_VERSION_CHECK: 1
+
+concurrency:
+  group: ${{ github.head_ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash -l {0}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+      - uses: conda-incubator/setup-miniconda@v2
+        with:
+          miniforge-version: latest
+          miniforge-variant: Mambaforge
+          environment-file: environment.yml
+          auto-update-conda: false
+          python-version: "3.10"
+      - name: "Install Trenchrun"
+        run: pip install .
+      - name: 'Debug Info'
+        run: |
+          echo python location: `which python`
+          echo python version: `python --version`
+          echo pytest location: `which pytest`
+          echo installed packages
+          conda list
+          pip list
