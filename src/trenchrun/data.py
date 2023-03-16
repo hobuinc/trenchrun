@@ -1,10 +1,10 @@
 from . import logs
 
 import json
-import uuid
 import tempfile
 import subprocess
 import shlex
+import pathlib
 
 import pdal
 
@@ -29,13 +29,18 @@ class Data(object):
 
         self.args = args
         self.checkValidData()
-        self.args.intensityPath = tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name
-        self.args.dsmPath = tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name
-        self.args.aoPath = tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name
+        self.args.intensityPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
+        self.args.dsmPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
+        self.args.aoPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
 
+
+    def __del__(self):
+        self.args.intensityPath.unlink()
+        self.args.dsmPath.unlink()
+        self.args.aoPath.unlink()
 
     def checkValidData(self):
-        reader = pdal.Reader(self.args.input)
+        reader = pdal.Reader(str(self.args.input))
         pipeline = reader.pipeline()
         qi = pipeline.quickinfo
         for key in qi:
@@ -48,21 +53,21 @@ class Data(object):
         if self.args.reader_args:
             with open(self.args.reader_args,'r') as f:
                 j = json.loads(f.read())
-            reader = pdal.Reader(filename=self.args.input, *j)
+            reader = pdal.Reader(filename=str(self.args.input), *j)
         else:
-            reader = pdal.Reader(filename=self.args.input, resolution=2.0)
+            reader = pdal.Reader(filename=str(self.args.input))
         return reader
 
     def getWriters(self):
         intensity = pdal.Writer.gdal(
-            filename=self.args.intensityPath,
+            filename=str(self.args.intensityPath),
             data_type='uint16_t',
             dimension='Intensity',
             output_type = 'idw',
             resolution=self.args.resolution,
         )
         dsm = pdal.Writer.gdal(
-            filename=self.args.dsmPath,
+            filename=str(self.args.dsmPath),
             data_type='float',
             dimension='Z',
             output_type = 'idw',
@@ -90,9 +95,7 @@ class Data(object):
             count = pipeline.execute_streaming(chunk_size=self.args.chunk_size)
         else:
             count = pipeline.execute()
-        logs.logger.info(f'Execute processed {count} points')
-        logs.logger.info(f'Wrote itensity at {self.args.intensityPath}')
-        logs.logger.info(f'Wrote dsm at {self.args.dsmPath}')
+        logs.logger.info(f'Wrote intensity and dsm for {count} points')
 
     def getFilters(self):
         if self.args.filters:
