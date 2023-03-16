@@ -8,5 +8,7 @@ Run](https://starwars.fandom.com/wiki/Meridian_trench) image for a scene using
 
 ![Meridian Trench](https://raw.githubusercontent.com/hobuinc/trenchrun/main/images/meridian.png)
 
+[[https://github.com/hobuinc/trenchrun/main/images/autzen-exposure.jpg|alt=autzen]]
+![Autzen](https://raw.githubusercontent.com/hobuinc/trenchrun/main/images/autzen-exposure.jpg)
 ![Autzen](https://raw.githubusercontent.com/hobuinc/trenchrun/main/images/autzen-exposure.jpg)
 
