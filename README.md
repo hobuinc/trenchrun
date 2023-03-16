@@ -6,9 +6,9 @@ Run](https://starwars.fandom.com/wiki/Meridian_trench) image for a scene using
 [Whitebox Tools](https://github.com/jblindsay/whitebox-tools/),
 [PDAL](https://pdal.io), and matplotlib.
 
-![Meridian Trench](https://raw.githubusercontent.com/hobuinc/trenchrun/main/images/meridian.png)
+![Meridian Trench](/images/meridian.png)
 
-[[/main/images/autzen-exposure.jpg|alt=autzen]]
+[[/images/autzen-exposure.jpg|alt=autzen]]
 ![Autzen](https://raw.githubusercontent.com/hobuinc/trenchrun/main/images/autzen-exposure.jpg)
 ![Autzen](https://raw.githubusercontent.com/hobuinc/trenchrun/main/images/autzen-exposure.jpg)
 
