@@ -28,11 +28,38 @@ class Data(object):
     def __init__(self, args):
 
         self.args = args
-        self.checkValidData()
+
+        if '.json' in self.args.input.suffixes:
+            self.inputType = 'pipeline'
+        else:
+            self.inputType = 'readable'
+
         self.args.intensityPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
         self.args.dsmPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
         self.args.aoPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
+        self.checkValidData()
 
+    def readPipeline(self):
+        if self.inputType != 'pipeline':
+            raise RuntimeError("Data type is not pipeline!")
+        j = self.args.input.read_bytes().decode('utf-8')
+        stages = pdal.pipeline._parse_stages(j)
+        p = pdal.Pipeline(stages)
+
+        # strip off any writers we're making our own
+        stages = []
+        for stage in p.stages:
+            if stage.type.split('.')[0] != 'writers':
+                stages.append(stage)
+
+        p = pdal.Pipeline(stages)
+        return p
+
+
+    def readFile(self):
+        reader = pdal.Reader(str(self.args.input))
+        pipeline = reader.pipeline()
+        return pipeline
 
     def __del__(self):
         self.args.intensityPath.unlink()
@@ -40,9 +67,13 @@ class Data(object):
         self.args.aoPath.unlink()
 
     def checkValidData(self):
-        reader = pdal.Reader(str(self.args.input))
-        pipeline = reader.pipeline()
-        qi = pipeline.quickinfo
+
+        if self.inputType == 'pipeline':
+            reader = self.readPipeline()
+        else:
+            reader = self.readFile()
+
+        qi = reader.quickinfo
         for key in qi:
             dimensions = [i.strip() for i in qi[key]['dimensions'].split(',')]
             if 'Intensity' not in dimensions:
@@ -76,14 +107,13 @@ class Data(object):
         return intensity | dsm
 
     def getPipeline(self):
-        reader = self.getReader()
-        filters = self.getFilters()
-        writers = self.getWriters()
-        stage = None
-        if filters:
-            stage = reader | filters | writers
+        if self.inputType == 'pipeline':
+            reader = self.readPipeline()
         else:
-            stage = reader | writers
+            reader = self.readFile()
+
+        writers = self.getWriters()
+        stage = reader | writers
 
         return stage
 
@@ -96,16 +126,6 @@ class Data(object):
         else:
             count = pipeline.execute()
         logs.logger.info(f'Wrote intensity and dsm for {count} points')
-
-    def getFilters(self):
-        if self.args.filters:
-            with open(self.args.filters,'r') as f:
-                j = json.loads(f.read())
-                stages = pdal.pipeline._parse_stages(json.dumps(j))
-                return pdal.Pipeline(stages)
-
-        else:
-            return None
 
     def getImageCenter(self):
         # Run our pipeline

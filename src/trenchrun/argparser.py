@@ -7,13 +7,9 @@ def get_parser(args):
 
     parser = argparse.ArgumentParser(description='Compute the Ambient Absorption imagery product for lidar')
     parser.add_argument('input',
-                        help='PDAL-readable lidar content', type=pathlib.Path)
+                        help='PDAL-readable lidar content as a file or a pipeline', type=pathlib.Path)
     parser.add_argument('--output',
                         help='Output filename', type=str, default='exposure')
-    parser.add_argument('--filters',
-                        help='Filter stages', type =str, default=None)
-    parser.add_argument('--reader_args',
-                        help='PDAL Reader args as JSON object', type =str, default=None)
     parser.add_argument('--resolution',
                         help='Raster output resolution', type =float, default=1.0)
     parser.add_argument('--alpha',
