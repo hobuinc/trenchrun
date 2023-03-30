@@ -10,6 +10,8 @@ def get_parser(args):
                         help='PDAL-readable lidar content as a file or a pipeline', type=pathlib.Path)
     parser.add_argument('--output',
                         help='Output filename', type=str, default='exposure')
+    parser.add_argument('--output-path',
+                        help='Path to write output data', type=pathlib.Path, default=pathlib.Path.cwd())
     parser.add_argument('--resolution',
                         help='Raster output resolution', type =float, default=1.0)
     parser.add_argument('--alpha',

@@ -98,10 +98,13 @@ class Blend(object):
         title = 'Absorptive Daylight Exposure'
 
         if self.data.args.full_output:
-            png.CreateCopy( f"{self.data.args.output}-trenchrun.png", rast, 0,
+            output = str(self.data.args.output_path / f"{self.data.args.output}-trenchrun.png")
+            png.CreateCopy( output, rast, 0,
                 [ f'TITLE={title}', f'COMMENT={description}' ] )
 
-        ds = gtif.CreateCopy( f"{self.data.args.output}-trenchrun.tif", rast, 0,
+        output = str(self.data.args.output_path / f"{self.data.args.output}-trenchrun.tif")
+        logs.logger.info(f'writing trenchrun to {output}')
+        ds = gtif.CreateCopy( output, rast, 0,
             [ 'COMPRESS=Deflate', 'TILED=YES','PREDICTOR=2' ] )
 
         if 'AREA_OR_POINT' in info['metadata']:
@@ -113,13 +116,19 @@ class Blend(object):
 
         if self.data.args.full_output:
             ao = gdal.Open(str(self.data.args.aoPath))
-            ds = gtif.CreateCopy( f"{self.data.args.output}-occlusion.tif", ao, 0,
+            output = str(self.data.args.output_path / f"{self.data.args.output}-occlusion.tif")
+            logs.logger.info(f'writing ambient occlusion to {output}')
+            ds = gtif.CreateCopy( output, ao, 0,
                 [ 'COMPRESS=Deflate', 'TILED=YES','PREDICTOR=2' ] )
 
             ao = gdal.Open(str(self.data.args.dsmPath))
-            ds = gtif.CreateCopy( f"{self.data.args.output}-dsm.tif", ao, 0,
+            output = str(self.data.args.output_path / f"{self.data.args.output}-dsm.tif")
+            logs.logger.info(f'writing dsm to {output}')
+            ds = gtif.CreateCopy( output, ao, 0,
                 [ 'COMPRESS=LZW', 'TILED=YES','PREDICTOR=3' ] )
 
             ao = gdal.Open(str(self.data.args.intensityPath))
-            ds = gtif.CreateCopy( f"{self.data.args.output}-intensity.tif", ao, 0,
+            output = str(self.data.args.output_path / f"{self.data.args.output}-intensity.tif")
+            logs.logger.info(f'writing intensity to {output}')
+            ds = gtif.CreateCopy( output, ao, 0,
                 [ 'COMPRESS=LZW', 'TILED=YES','PREDICTOR=2' ] )
