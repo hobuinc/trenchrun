@@ -11,6 +11,7 @@ import numpy.ma as ma
 from osgeo import gdal
 gdal.UseExceptions()
 
+from .data import Intensity, DSM, Daylight
 
 def readBand(filename,
              bandNumber,
@@ -42,27 +43,36 @@ def getInfo(filename):
     return output
 
 class Blend(object):
-    def __init__(self, data):
-        self.data = data
+    def __init__(self, intensity: Intensity, dsm: DSM, daylight: Daylight):
+        self.intensity = intensity
+        self.daylight = daylight
+        self.dsm = dsm
 
-    def do(self):
-        intensityFilename = str(self.data.args.intensityPath)
-        daylightFilename = str(self.data.args.aoPath)
+    def write(self, args):
+        intensityFilename = str(self.intensity.path)
+        daylightFilename = str(self.daylight.path)
         intensity = readBand(intensityFilename, 1, np.float32, True)
         daylight = readBand(daylightFilename, 1)
+        dsm = readBand(str(self.dsm.path), 1)
+
+        if intensity.shape != daylight.shape:
+            breakpoint()
+            x, y = intensity.shape
+            daylight = daylight[0:x, 0:y]
 
         logs.logger.info(f'Intensity shape {intensity.shape} ')
-        logs.logger.info(f'Daylight shape {intensity.shape} ')
+        logs.logger.info(f'Daylight shape {daylight.shape} ')
 
         intensity_mask = ma.getmask(intensity)
         daylight_mask = ma.getmask(daylight)
-        if self.data.args.blue:
+        if args.blue:
             cmap = mpl.cm.Blues_r
         else:
             cmap = mpl.cm.Greys_r
 
+        breakpoint()
         intensity_RGBA = cmap(intensity)
-        intensity_RGBA[...,3] = np.full(intensity.shape, self.data.args.alpha)
+        intensity_RGBA[...,3] = np.full(intensity.shape, args.alpha)
 
         cmap = mpl.cm.Greys_r
         daylight_RGB = cmap(daylight)
@@ -70,7 +80,6 @@ class Blend(object):
         RGBA = intensity_RGBA * 0.5 + daylight_RGB * 0.5
 
         numBands = RGBA.shape[2]
-
 
         nodata = 255
         big = (RGBA*255).astype(np.uint8)
@@ -97,12 +106,12 @@ class Blend(object):
         description='daylight exposure mixed with lidar intensity'
         title = 'Absorptive Daylight Exposure'
 
-        if self.data.args.full_output:
-            output = str(self.data.args.output_path / f"{self.data.args.output}-trenchrun.png")
+        if args.full_output:
+            output = str(args.output_path / f"{args.output}-trenchrun.png")
             png.CreateCopy( output, rast, 0,
                 [ f'TITLE={title}', f'COMMENT={description}' ] )
 
-        output = str(self.data.args.output_path / f"{self.data.args.output}-trenchrun.tif")
+        output = str(args.output_path / f"{args.output}-trenchrun.tif")
         logs.logger.info(f'writing trenchrun to {output}')
         ds = gtif.CreateCopy( output, rast, 0,
             [ 'COMPRESS=Deflate', 'TILED=YES','PREDICTOR=2' ] )
@@ -114,21 +123,21 @@ class Blend(object):
         ds.SetMetadataItem('TIFFTAG_IMAGEDESCRIPTION',f'{description}')
         ds.SetMetadataItem('TIFFTAG_DOCUMENTNAME',f'{title}')
 
-        if self.data.args.full_output:
-            ao = gdal.Open(str(self.data.args.aoPath))
-            output = str(self.data.args.output_path / f"{self.data.args.output}-occlusion.tif")
+        if args.full_output:
+            ao = gdal.Open(str(self.daylight.path))
+            output = str(args.output_path / f"{args.output}-occlusion.tif")
             logs.logger.info(f'writing ambient occlusion to {output}')
             ds = gtif.CreateCopy( output, ao, 0,
                 [ 'COMPRESS=Deflate', 'TILED=YES','PREDICTOR=2' ] )
 
-            ao = gdal.Open(str(self.data.args.dsmPath))
-            output = str(self.data.args.output_path / f"{self.data.args.output}-dsm.tif")
+            ao = gdal.Open(str(self.dsm.path))
+            output = str(args.output_path / f"{args.output}-dsm.tif")
             logs.logger.info(f'writing dsm to {output}')
             ds = gtif.CreateCopy( output, ao, 0,
                 [ 'COMPRESS=LZW', 'TILED=YES','PREDICTOR=3' ] )
 
-            ao = gdal.Open(str(self.data.args.intensityPath))
-            output = str(self.data.args.output_path / f"{self.data.args.output}-intensity.tif")
+            ao = gdal.Open(str(self.intensity.path))
+            output = str(args.output_path / f"{args.output}-intensity.tif")
             logs.logger.info(f'writing intensity to {output}')
             ds = gtif.CreateCopy( output, ao, 0,
                 [ 'COMPRESS=LZW', 'TILED=YES','PREDICTOR=2' ] )

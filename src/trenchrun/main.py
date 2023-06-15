@@ -2,11 +2,19 @@
 from . import logs 
 from . import do
 from . import argparser
+from . import rls
 import sys
 
+def rls_main():
+    args = argparser.get_rls_parser(sys.argv[1:])
+    if args.debug:
+        logs.logger.setLevel(logs.logging.DEBUG)
+        logs.handler.setLevel(logs.logging.DEBUG)
 
-def main():
-    args = argparser.get_parser(sys.argv[1:])
+    rls.do(args)
+
+def trenchrun():
+    args = argparser.get_trechrun_parser(sys.argv[1:])
     if args.debug:
         logs.logger.setLevel(logs.logging.DEBUG)
         logs.handler.setLevel(logs.logging.DEBUG)

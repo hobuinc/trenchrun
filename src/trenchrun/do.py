@@ -5,9 +5,16 @@ from .logs import logger
 
 def doIt(args):
     logger.info(f"opening {args.input} for processing")
-    d = data.Data(args)
-    d.execute()
-    d.ambient_occlusion()
+    reader = data.Reader(args)
 
-    b = blend.Blend(d)
-    b.do()
+    intensity = data.Intensity(reader)
+    dsm = data.DSM(reader)
+
+    dsm.process()
+    intensity.process()
+
+    daylight = data.Daylight(dsm)
+    daylight.process()
+
+    b = blend.Blend(intensity, dsm, daylight)
+    b.write(args)

@@ -1,7 +1,7 @@
 import pathlib
 
 
-def get_parser(args):
+def get_trenchrun_parser(args):
 
     import argparse
 
@@ -22,6 +22,35 @@ def get_parser(args):
                         help='Use blue shade intensity', default=True)
     parser.add_argument('--full-output',
                         help='Output all intermediate output', default=True)
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='print debug messages to stderr')
+
+
+    args = parser.parse_args(args)
+    return args
+
+def get_rls_parser(args):
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Compute a line of sight mask along a route for a digital surface model and a line ')
+    parser.add_argument('input',
+                        help='GDAL-readable DSM content', type=pathlib.Path)
+    parser.add_argument('line',
+                        help='Linestring to use for RLS', type=str)
+    parser.add_argument('--line_srs',
+                        help='SRS of Linestring (assumed EPSG:4326 if not specified)', type=str)
+    parser.add_argument('--output',
+                        help='Output mask filename', type=str, default='rls-mask')
+    parser.add_argument('--output-path',
+                        help='Path to write output data', type=pathlib.Path, default=pathlib.Path.cwd())
+    parser.add_argument('--height',
+                        help='Target height to compute viewshed', type=float, default=2.0)
+    parser.add_argument('--density',
+                        help='Step density along the line to compute viewsheds', type=float, default=10.0)
+    parser.add_argument('--range',
+                        help='Range to compute maximum visibility (500m)', type=int, default=int(500))
     parser.add_argument('--debug',
                         action='store_true',
                         help='print debug messages to stderr')

@@ -2,5 +2,8 @@ import trenchrun.main as pl
 
 import sys
 
-def main():
-    sys.exit(pl.main())
+def trenchrun():
+    sys.exit(pl.trenchrun())
+
+def rls():
+    sys.exit(pl.rls_main())

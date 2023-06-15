@@ -24,20 +24,128 @@ def run(command):
     response = ret[0].decode('utf-8','replace')
     return response
 
-class Data(object):
-    def __init__(self, args):
+class Product(object):
+    def __init__(self, reader):
+        self.reader = reader
+        self.path = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
+        self.validate()
 
+    def __del__(self):
+        self.path.unlink()
+
+    def getStage(self):
+        pass
+
+    def validate(self):
+        pass
+
+    def process(self):
+        stage = self.getStage()
+
+        pipeline = self.reader.get() | stage
+
+        count = 0
+        if pipeline.streamable:
+            count = pipeline.execute_streaming(chunk_size=self.reader.args.chunk_size)
+        else:
+            count = pipeline.execute()
+        logs.logger.info(f'Wrote {self.name} product for {count} points')
+
+class Intensity(Product):
+    def __init__(self, reader):
+        self.name = 'Intensity'
+        super().__init__(reader)
+
+
+    def getStage(self):
+        stage = pdal.Writer.gdal(
+            filename=str(self.path),
+            data_type='uint16_t',
+            dimension='Intensity',
+            output_type = 'idw',
+            resolution=self.reader.args.resolution,
+        )
+
+        return stage
+
+    def validate(self):
+        qi = self.reader.get().quickinfo
+        for key in qi:
+            dimensions = [i.strip() for i in qi[key]['dimensions'].split(',')]
+            if self.name not in dimensions:
+                raise RuntimeError(f"{self.name} information not available, this tool cannot run")
+
+
+class DSM(Product):
+    def __init__(self, reader):
+        self.name = 'DSM'
+        super().__init__(reader)
+
+
+    def getStage(self):
+        stage = pdal.Writer.gdal(filename=str(self.path),
+                                 data_type='float',
+                                 dimension='Z',
+                                 output_type = 'idw',
+                                 resolution=self.reader.args.resolution)
+        return stage
+
+class Daylight(object):
+    def __init__(self, dsm: DSM):
+        self.name = 'Daylight'        
+        self.path = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
+        self.dsm = dsm
+
+    def getImageCenter(self):
+        # Run our pipeline
+
+        command = f'gdalinfo -json {self.dsm.path}'
+        response = run(command)
+        j = json.loads(response)
+        corner = j['wgs84Extent']['coordinates'][0][0]
+        logs.logger.info(f'Fetched image center {corner}')
+        return corner
+
+
+    def process(self):
+
+        lng, lat = self.getImageCenter()
+
+        command = f"""whitebox_tools -r=TimeInDaylight  \
+        -i {self.dsm.path} -o {self.path}  --az_fraction=15.0 \
+        --max_dist=100.0 --lat={lat:.5f} --long={lng:.5f} """
+        logs.logger.info(f"Processing ambient occlusion '{command}'")
+        response = run(command)
+        logs.logger.info(f"Processed ambient occlusion ")
+
+
+class Reader(object):
+    def __init__(self, args ):
         self.args = args
+        self.name = 'Reader'
+
+        self.reader_args = None
+        if 'reader_args' in self.args:
+            with open(self.args.reader_args,'r') as f:
+                self.reader_args = json.loads(f.read())
 
         if '.json' in self.args.input.suffixes:
             self.inputType = 'pipeline'
         else:
             self.inputType = 'readable'
 
-        self.args.intensityPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
-        self.args.dsmPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
-        self.args.aoPath = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
-        self.checkValidData()
+    def get(self):
+        if self.inputType == 'pipeline':
+            reader = self.readPipeline()
+        else:
+            reader = readFile()
+
+        return reader
+    def readFile(self):
+        reader = pdal.Reader(str(self.args.input), *self.reader_args)
+        pipeline = reader.pipeline()
+        breakpoint()
+        return pipeline
 
     def readPipeline(self):
         if self.inputType != 'pipeline':
@@ -56,94 +164,5 @@ class Data(object):
         return p
 
 
-    def readFile(self):
-        reader = pdal.Reader(str(self.args.input))
-        pipeline = reader.pipeline()
-        return pipeline
-
-    def __del__(self):
-        self.args.intensityPath.unlink()
-        self.args.dsmPath.unlink()
-        self.args.aoPath.unlink()
-
-    def checkValidData(self):
-
-        if self.inputType == 'pipeline':
-            reader = self.readPipeline()
-        else:
-            reader = self.readFile()
-
-        qi = reader.quickinfo
-        for key in qi:
-            dimensions = [i.strip() for i in qi[key]['dimensions'].split(',')]
-            if 'Intensity' not in dimensions:
-                raise RuntimeError("Intensity information not available, this tool cannot run")
-
-    def getReader(self):
-        reader = None
-        if self.args.reader_args:
-            with open(self.args.reader_args,'r') as f:
-                j = json.loads(f.read())
-            reader = pdal.Reader(filename=str(self.args.input), *j)
-        else:
-            reader = pdal.Reader(filename=str(self.args.input))
-        return reader
-
-    def getWriters(self):
-        intensity = pdal.Writer.gdal(
-            filename=str(self.args.intensityPath),
-            data_type='uint16_t',
-            dimension='Intensity',
-            output_type = 'idw',
-            resolution=self.args.resolution,
-        )
-        dsm = pdal.Writer.gdal(
-            filename=str(self.args.dsmPath),
-            data_type='float',
-            dimension='Z',
-            output_type = 'idw',
-            resolution=self.args.resolution,
-        )
-        return intensity | dsm
-
-    def getPipeline(self):
-        if self.inputType == 'pipeline':
-            reader = self.readPipeline()
-        else:
-            reader = self.readFile()
-
-        writers = self.getWriters()
-        stage = reader | writers
-
-        return stage
-
-
-    def execute(self):
-        pipeline = self.getPipeline()
-        count = 0
-        if pipeline.streamable:
-            count = pipeline.execute_streaming(chunk_size=self.args.chunk_size)
-        else:
-            count = pipeline.execute()
-        logs.logger.info(f'Wrote intensity and dsm for {count} points')
-
-    def getImageCenter(self):
-        # Run our pipeline
-
-        command = f'gdalinfo -json {self.args.dsmPath}'
-        response = run(command)
-        j = json.loads(response)
-        corner = j['wgs84Extent']['coordinates'][0][0]
-        logs.logger.info(f'Fetched image center {corner}')
-        return corner
-    def ambient_occlusion(self):
-        lng, lat = self.getImageCenter()
-
-        command = f"""whitebox_tools -r=TimeInDaylight  \
-        -i {self.args.dsmPath} -o {self.args.aoPath}  --az_fraction=15.0 \
-        --max_dist=100.0 --lat={lat:.5f} --long={lng:.5f} """
-        logs.logger.info(f"Processing ambient occlusion '{command}'")
-        response = run(command)
-        logs.logger.info(f"Processed ambient occlusion ")
 
 
