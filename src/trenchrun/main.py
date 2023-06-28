@@ -13,8 +13,8 @@ def rls_main():
 
     rls.do(args)
 
-def trenchrun():
-    args = argparser.get_trechrun_parser(sys.argv[1:])
+def trenchrun_main():
+    args = argparser.get_trenchrun_parser(sys.argv[1:])
     if args.debug:
         logs.logger.setLevel(logs.logging.DEBUG)
         logs.handler.setLevel(logs.logging.DEBUG)
@@ -23,6 +23,6 @@ def trenchrun():
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(trenchrun_main())
 
 
