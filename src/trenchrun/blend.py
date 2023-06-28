@@ -56,7 +56,6 @@ class Blend(object):
         dsm = readBand(str(self.dsm.path), 1)
 
         if intensity.shape != daylight.shape:
-            breakpoint()
             x, y = intensity.shape
             daylight = daylight[0:x, 0:y]
 
