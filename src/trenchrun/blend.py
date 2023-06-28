@@ -69,7 +69,6 @@ class Blend(object):
         else:
             cmap = mpl.cm.Greys_r
 
-        breakpoint()
         intensity_RGBA = cmap(intensity)
         intensity_RGBA[...,3] = np.full(intensity.shape, args.alpha)
 
