@@ -92,7 +92,7 @@ class DSM(Product):
 
 class Daylight(object):
     def __init__(self, dsm: DSM):
-        self.name = 'Daylight'        
+        self.name = 'Daylight'
         self.path = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
         self.dsm = dsm
 
@@ -124,7 +124,7 @@ class Reader(object):
         self.args = args
         self.name = 'Reader'
 
-        self.reader_args = None
+        self.reader_args = []
         if 'reader_args' in self.args:
             with open(self.args.reader_args,'r') as f:
                 self.reader_args = json.loads(f.read())
@@ -138,13 +138,12 @@ class Reader(object):
         if self.inputType == 'pipeline':
             reader = self.readPipeline()
         else:
-            reader = readFile()
+            reader = self.readFile()
 
         return reader
     def readFile(self):
         reader = pdal.Reader(str(self.args.input), *self.reader_args)
         pipeline = reader.pipeline()
-        breakpoint()
         return pipeline
 
     def readPipeline(self):
