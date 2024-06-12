@@ -38,4 +38,5 @@ build-backend = "setuptools.build_meta"
 [project.scripts]
 trenchrun = "trenchrun.__main__:trenchrun"
 rls = "trenchrun.__main__:rls"
+trenchrun-builder = "trenchrun.__main__:pipline_builder"
 

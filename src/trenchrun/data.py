@@ -7,6 +7,7 @@ import shlex
 import pathlib
 
 import pdal
+from osgeo import gdal
 
 
 def run(command):
@@ -30,8 +31,12 @@ class Product(object):
         self.path = pathlib.Path(tempfile.NamedTemporaryFile(suffix='.tif', delete=False).name)
         self.validate()
 
+
     def __del__(self):
         self.path.unlink()
+
+    def getMetadata(self):
+        pass
 
     def getStage(self):
         pass
@@ -39,7 +44,7 @@ class Product(object):
     def validate(self):
         pass
 
-    def process(self):
+    def process(self, *args, **kwargs):
         stage = self.getStage()
 
         pipeline = self.reader.get() | stage
@@ -49,7 +54,11 @@ class Product(object):
             count = pipeline.execute_streaming(chunk_size=self.reader.args.chunk_size)
         else:
             count = pipeline.execute()
+
         logs.logger.info(f'Wrote {self.name} product for {count} points')
+        self.metadata = pipeline.metadata
+        self.getMetadata()
+
 
 class Intensity(Product):
     def __init__(self, reader):
@@ -63,6 +72,10 @@ class Intensity(Product):
             data_type='uint16_t',
             dimension='Intensity',
             output_type = 'idw',
+            origin_x = self.reader.args.origin_x,
+            origin_y = self.reader.args.origin_y,
+            width = self.reader.args.width,
+            height = self.reader.args.height,
             resolution=self.reader.args.resolution,
         )
 
@@ -89,6 +102,20 @@ class DSM(Product):
                                  output_type = 'idw',
                                  resolution=self.reader.args.resolution)
         return stage
+
+    def getMetadata(self):
+        ds = gdal.Open(self.path)
+        xmin, xpixel, _, ymax, _, ypixel = ds.GetGeoTransform()
+        width, height = ds.RasterXSize, ds.RasterYSize
+        # xmax = xmin + width * xpixel
+        ymin = ymax + height * ypixel
+
+        self.reader.args.origin_x = xmin
+        self.reader.args.origin_y = ymin
+        self.reader.args.width = width
+        self.reader.args.height = height
+
+
 
 class Daylight(object):
     def __init__(self, dsm: DSM):

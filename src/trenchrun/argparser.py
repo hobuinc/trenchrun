@@ -58,3 +58,24 @@ def get_rls_parser(args):
 
     args = parser.parse_args(args)
     return args
+
+def get_builder_parser(args):
+
+    import argparse
+
+    parser = argparse.ArgumentParser(description='Build a PDAL pipeline for a given EPT and GeoJSON geometry that is suitable for Trenchrun')
+    parser.add_argument('ept',
+                        help='EPT to use for fetching content', type=str)
+    parser.add_argument('geojson',
+                        help='GeoJSON geometry describing footprint', type=pathlib.Path)
+    parser.add_argument('--output',
+                        help='Output filename', type=pathlib.Path, default='output-pipeline.json')
+    parser.add_argument('--buffer',
+                        help='Buffer the geometry', type=float, default=float('nan') )
+    parser.add_argument('--debug',
+                        action='store_true',
+                        help='print debug messages to stderr')
+
+
+    args = parser.parse_args(args)
+    return args

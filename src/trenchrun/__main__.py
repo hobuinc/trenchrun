@@ -7,3 +7,6 @@ def trenchrun():
 
 def rls():
     sys.exit(pl.rls_main())
+
+def pipline_builder():
+    sys.exit(pl.pipeline_builder_main())

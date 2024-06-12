@@ -15,8 +15,6 @@ from shapely.geometry import shape, Polygon, LineString
 from shapely.ops import transform
 from shapely import wkt
 
-
-
 def get_polyline(args):
 
     line_dd = wkt.loads(args.line)
