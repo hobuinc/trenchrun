@@ -1,6 +1,6 @@
 from . import data
 from . import blend
-from .logs import logger 
+from .logs import logger
 
 
 def doIt(args):

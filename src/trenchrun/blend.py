@@ -13,6 +13,7 @@ gdal.UseExceptions()
 
 from .data import Intensity, DSM, Daylight
 
+
 def readBand(filename,
              bandNumber,
              npDataType = np.float32,
@@ -23,7 +24,14 @@ def readBand(filename,
     projection = ds.GetProjection()
     array = band.ReadAsArray().astype(npDataType)
     if normalize:
-        array = (array - array.min()) / (array.max() - array.min())
+        norm = mpl.colors.Normalize()
+        med = np.median(array)
+        std = np.std(array)
+        factor = 3
+        min = med - factor*std
+        max = med + factor*std
+        norm = mpl.colors.Normalize(vmin=min, vmax=max, clip=True)
+        array = norm(array)
 
     # mask off any nodata values
     nodata = band.GetNoDataValue()
@@ -56,8 +64,7 @@ class Blend(object):
         dsm = readBand(str(self.dsm.path), 1)
 
         if intensity.shape != daylight.shape:
-            x, y = intensity.shape
-            daylight = daylight[0:x, 0:y]
+            raise Exception("Images are not the same size and shape!")
 
         logs.logger.info(f'Intensity shape {intensity.shape} ')
         logs.logger.info(f'Daylight shape {daylight.shape} ')
@@ -75,7 +82,10 @@ class Blend(object):
         cmap = mpl.cm.Greys_r
         daylight_RGB = cmap(daylight)
 
-        RGBA = intensity_RGBA * 0.5 + daylight_RGB * 0.5
+        try:
+            RGBA = intensity_RGBA * 0.5 + daylight_RGB * 0.5
+        except ValueError:
+            breakpoint()
 
         numBands = RGBA.shape[2]
 
