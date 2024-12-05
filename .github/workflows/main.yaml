@@ -24,22 +24,22 @@ jobs:
       run:
         shell: bash -l {0}
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-      - uses: mamba-org/setup-micromamba@v2
-        with:
-          init-shell: bash
-          environment-file: "environment.yml"
-          environment-name: "trenchrun""
-          cache-environment: true
-          cache-downloads: true
-      - name: "Install Trenchrun"
-        run: pip install .
-      - name: 'Debug Info'
-        run: |
-          echo python location: `which python`
-          echo python version: `python --version`
-          echo pytest location: `which pytest`
-          echo installed packages
-          conda list
-          pip list
+    - name: Checkout repository
+      uses: actions/checkout@v3
+    - uses: mamba-org/setup-micromamba@v2
+      with:
+        init-shell: bash
+        environment-file: "environment.yml"
+        environment-name: "trenchrun""
+        cache-environment: true
+        cache-downloads: true
+    - name: "Install Trenchrun"
+      run: pip install .
+    - name: 'Debug Info'
+      run: |
+        echo python location: `which python`
+        echo python version: `python --version`
+        echo pytest location: `which pytest`
+        echo installed packages
+        conda list
+        pip list
