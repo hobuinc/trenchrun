@@ -24,14 +24,13 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - name: Setup micromamba
-      uses: conda-incubator/setup-miniconda@v3
+    - uses: mamba-org/setup-micromamba@v2
       with:
-        miniforge-variant: Mambaforge
-        miniforge-version: latest
-        use-mamba: true
-        python-version: "3.11"
-        auto-update-conda: true
-        environment-file: environment.yml
+        init-shell: bash
+        environment-file: "environment.yml"
+        environment-name: "trenchrun"
+        cache-environment: true
+        cache-downloads: true
 
     - name: Install dependencies
       shell: bash -l {0}

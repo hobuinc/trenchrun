@@ -26,12 +26,13 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - uses: conda-incubator/setup-miniconda@v2
+      - uses: mamba-org/setup-micromamba@v2
         with:
-          miniforge-version: latest
-          environment-file: environment.yml
-          auto-update-conda: false
-          python-version: "3.11"
+          init-shell: bash
+          environment-file: "environment.yml"
+          environment-name: "trenchrun""
+          cache-environment: true
+          cache-downloads: true
       - name: "Install Trenchrun"
         run: pip install .
       - name: 'Debug Info'

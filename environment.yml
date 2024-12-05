@@ -1,4 +1,4 @@
-name: absorption
+name: trenchrun
 channels:
   - conda-forge
 dependencies:
