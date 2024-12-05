@@ -29,7 +29,6 @@ jobs:
       - uses: conda-incubator/setup-miniconda@v2
         with:
           miniforge-version: latest
-          miniforge-variant: Mambaforge
           environment-file: environment.yml
           auto-update-conda: false
           python-version: "3.11"
