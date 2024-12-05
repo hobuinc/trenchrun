@@ -82,14 +82,11 @@ class Blend(object):
         cmap = mpl.cm.Greys_r
         daylight_RGB = cmap(daylight)
 
-        try:
-            RGBA = intensity_RGBA * 0.5 + daylight_RGB * 0.5
-        except ValueError:
-            breakpoint()
+        RGBA = intensity_RGBA * 0.5 + daylight_RGB * 0.5
 
         numBands = RGBA.shape[2]
 
-        nodata = 255
+        nodata = np.uint8(255)
         big = (RGBA*255).astype(np.uint8)
         for i in range(numBands):
             ma.putmask(big[...,i], intensity_mask, nodata)
@@ -107,7 +104,7 @@ class Blend(object):
         for b in range(numBands):
             band =rast.GetRasterBand(b+1)
             band.WriteArray(big[...,b])
-            band.SetNoDataValue(nodata)
+            band.SetNoDataValue(int(nodata))
 
         png = gdal.GetDriverByName("PNG")
 
