@@ -9,3 +9,9 @@ dependencies:
   - numpy
   - python
   - whitebox_tools
+  - pip
+  - pyproj
+  - shapely
+  - geocoder
+  - pip:
+    - requests
