@@ -26,7 +26,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-      - uses: mamba-org/setup-micromamba@v2
+      - name: Setup micromamba
+        uses: mamba-org/setup-micromamba@v2
         with:
           init-shell: bash
           environment-file: "environment.yml"
