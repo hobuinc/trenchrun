@@ -5,13 +5,14 @@ import tempfile
 import subprocess
 import shlex
 import pathlib
+import os
 
 import pdal
 from osgeo import gdal
 
 
 def run(command):
-    args = shlex.split(command)
+    args = shlex.split(command, posix=(os.name != "nt"))
     p = subprocess.Popen(args,
                             stdin = subprocess.PIPE,
                             stdout = subprocess.PIPE,
