@@ -1,0 +1,49 @@
+name: Package
+on:
+  push:
+    branches:
+      - main
+    tags:
+      # - '**' # for testing
+      - "[0-9]+.[0-9]+.[0-9]+"
+
+jobs:
+  pack:
+    name: pack ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    # needs: build
+    strategy:
+      matrix:
+        os: [macos-latest, windows-latest, ubuntu-latest]
+    
+    steps:
+     - uses: actions/checkout@v6
+     - uses: conda-incubator/setup-miniconda@v3
+       with:
+         activate-environment: build
+         environment-file: ci/package-environment.yaml
+         auto-activate: true
+         miniforge-version: latest
+         use-mamba: true
+         auto-update-conda: true
+         conda-remove-defautls: true
+         python-version: '3.13'
+     - name: Install package
+       shell: bash -l {0}
+       run: | 
+         conda env create -f environment.yml
+         conda activate trenchrun
+
+         python -m pip install .
+
+         conda deactivate
+
+         conda-pack -n trenchrun -o trenchrun-packed-environment-${{ matrix.os }}.tar.gz
+
+     - uses: actions/upload-artifact@v6
+       name: Gather trenchrun package
+       with:
+         name: trenchrun-packed-environment-${{ matrix.os }}
+         if-no-files-found: error
+         path: | 
+           trenchrun-packed-environment-${{ matrix.os }}.tar.gz
